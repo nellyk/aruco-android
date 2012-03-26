@@ -13,6 +13,7 @@ import android.graphics.Canvas;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import es.ava.aruco.Board;
 import es.ava.aruco.Marker;
 
 public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Callback, Runnable {
@@ -23,12 +24,14 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
     private VideoCapture        mCamera;
 
     protected Vector<Marker>	 	mDetectedMarkers;
+    protected Board					mBoardDetected;
     
     public ViewBase(Context context, Aruco3dTestActivity renderer) {
         super(context);
         mHolder = getHolder();
         mHolder.addCallback(this);
         mDetectedMarkers = new Vector<Marker>();
+        mBoardDetected = new Board();
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
 

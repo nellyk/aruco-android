@@ -9,6 +9,7 @@ import org.opencv.highgui.VideoCapture;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.view.SurfaceHolder;
+import es.ava.aruco.BoardDetector;
 import es.ava.aruco.CameraParameters;
 import es.ava.aruco.MarkerDetector;
 import es.ava.aruco.exceptions.CPException;
@@ -20,12 +21,14 @@ class View extends ViewBase {
     protected float markerSizeMeters;
     protected Aruco3dTestActivity	mRenderer;
     protected MarkerDetector mDetector;
+    protected BoardDetector mBDetector;
     
     public View(Context context, Aruco3dTestActivity renderer, CameraParameters cp, float markerSize) {
         super(context, renderer);
         
         mCamParam = new CameraParameters(cp);
         mDetector = new MarkerDetector();
+        mBDetector = new BoardDetector();
         mRenderer = renderer;
         markerSizeMeters = markerSize;
     }
@@ -57,8 +60,10 @@ class View extends ViewBase {
         capture.retrieve(mFrame, Highgui.CV_CAP_ANDROID_COLOR_FRAME_RGBA);
 		
 		mDetector.detect(mFrame, mDetectedMarkers, mCamParam.getCameraMatrix(), mCamParam.getDistCoeff(), markerSizeMeters,mFrame);
-		
 		mRenderer.onDetection(mFrame, mDetectedMarkers);
+		
+		mBDetector.detect(mDetectedMarkers, conf, mBoardDetected, mCamParam, markerSizeMeters);
+		mRenderer.onBoardDetection(mFrame, mBoardDetected);
 		
         Bitmap bmp = Bitmap.createBitmap(mFrame.cols(), mFrame.rows(), Bitmap.Config.ARGB_8888);
 

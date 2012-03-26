@@ -7,6 +7,7 @@ import min3d.core.Object3dContainer;
 
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.Core;
+import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
@@ -26,7 +27,7 @@ public class Marker extends Vector<Point> implements Comparable{
 	
 	private static final long serialVersionUID = 1L;
 	protected int id;
-	private float ssize;
+	protected float ssize;
 	private int rotations;
 	
 	private Code code; // a matrix of integer representing the code (see the class to further explanation)
@@ -92,9 +93,9 @@ public class Marker extends Vector<Point> implements Comparable{
 		return id;
 	}
 	
-	public static Mat createMarkerImage(int id,int size) throws Exception	{
+	public static Mat createMarkerImage(int id,int size) throws CvException	{
 	    if (id>=1024)
-	    	throw new Exception("id out of range");
+	    	throw new CvException("id out of range");
 	    Mat marker = new Mat(size,size, CvType.CV_8UC1, new Scalar(0));
 	    //for each line, create
 	    int swidth=size/7;
