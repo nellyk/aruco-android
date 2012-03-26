@@ -9,8 +9,10 @@ import org.opencv.core.Mat;
 
 import android.graphics.PixelFormat;
 import android.os.Bundle;
-import android.view.Window;
 import android.view.ViewGroup.LayoutParams;
+import android.view.Window;
+import es.ava.aruco.Board;
+import es.ava.aruco.BoardConfiguration;
 import es.ava.aruco.CameraParameters;
 import es.ava.aruco.Marker;
 
@@ -18,8 +20,9 @@ public abstract class Aruco3dTestActivity extends RendererActivity {
 	
 	public CameraParameters mCamParam;
 	public float mMarkerSize;
+	public BoardConfiguration mBC;
 	
-	View view;
+	View view;// TODO set to private¿?
 	
 	protected void onCreate(Bundle savedInstanceState) 
 	{
@@ -53,4 +56,5 @@ public abstract class Aruco3dTestActivity extends RendererActivity {
 	
 	public abstract void initDetectionParam();
 	public abstract void onDetection(Mat frame, Vector<Marker> detectedMarkers);
+	public abstract void onBoardDetection(Mat mFrame, Board mBoardDetected);
 }
