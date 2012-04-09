@@ -16,8 +16,9 @@ import es.ava.aruco.BoardConfiguration;
 import es.ava.aruco.CameraParameters;
 import es.ava.aruco.Marker;
 
-public abstract class Aruco3dTestActivity extends RendererActivity {
+public abstract class Aruco3dActivity extends RendererActivity {
 	
+	public boolean lookForBoard;
 	public CameraParameters mCamParam;
 	public float mMarkerSize;
 	public BoardConfiguration mBC;
@@ -56,5 +57,5 @@ public abstract class Aruco3dTestActivity extends RendererActivity {
 	
 	public abstract void initDetectionParam();
 	public abstract void onDetection(Mat frame, Vector<Marker> detectedMarkers);
-	public abstract void onBoardDetection(Mat mFrame, Board mBoardDetected);
+	public abstract void onBoardDetection(Mat mFrame, Board mBoardDetected, float probability);
 }
