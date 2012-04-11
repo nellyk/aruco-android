@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">AndroidSampleProject</string>
+    <string name="app_name">Aruco Samples</string>
     <string name="id">ID:</string>
     <string name="create">Create</string>
     <string name="save">Save</string>
+    <string name="menuTitle">Menu</string>
 </resources>
