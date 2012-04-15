@@ -13,6 +13,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.utils.Converters;
 
 import es.ava.aruco.exceptions.ExtParamException;
 
@@ -77,7 +78,7 @@ public class Board extends Vector<Marker>{
 		Calib3d.projectPoints( objectPoints, Rvec, Tvec,
 				cp.getCameraMatrix(), cp.getDistCoeff(), imagePoints);
 		List<Point> pts = new Vector<Point>();
-		Utils.Mat_to_vector_Point(imagePoints, pts);
+		Converters.Mat_to_vector_Point(imagePoints, pts);
 		
 		Core.line(frame ,pts.get(0),pts.get(1), color, 2);
 		Core.line(frame ,pts.get(0),pts.get(2), color, 2);

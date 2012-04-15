@@ -1,6 +1,8 @@
 package es.ava.aruco;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Vector;
 
 import org.opencv.core.CvType;
@@ -8,6 +10,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.utils.Converters;
 
 // TODO eliminate innecessary native calls, for example store the frame info 
 // such as type in member fields and call it only once
@@ -31,51 +34,6 @@ public class MarkerDetector {
 		hierarchy2 = new Mat();
 		contours2 = new Vector<Mat>();
 	}
-
-	public static void glMyProjMatrix(CameraParameters cp, Size size,
-			double proj_matrix[], double znear, double zfar){
-		for(int i=0;i<16;i++)
-			proj_matrix[i] = 0.0;
-		float[] camMat = new float[9];
-		cp.getCameraMatrix().get(0, 0, camMat);
-		double iwidth = size.width;
-		double iheight = size.height;
-//		double x0 = iwidth/2.0;
-//		double y0 = iheight/2.0;
-		double x0 = 0;
-		double y0 = 0;
-//		proj_matrix[0] = 2.0*camMat[0]/iwidth;
-//		proj_matrix[5] = -2.0*camMat[4]/iheight;
-//		proj_matrix[8] = 2.0*(camMat[2]/iwidth)-1.0;
-//		proj_matrix[9] = 2.0*(camMat[5]/iheight)-1.0;
-//		proj_matrix[10] = -(zfar+znear)/(zfar-znear);
-//		proj_matrix[11] = -1.0;
-//		proj_matrix[14] = -2.0*zfar*znear / (zfar-znear);
-		// OPCION A
-//		proj_matrix[0] = 2.0*camMat[0]/iwidth;
-//		proj_matrix[5] = -2.0*camMat[4]/iheight;
-//		proj_matrix[8] = (iwidth - 2*camMat[2] + 2*x0)/iwidth;
-//		proj_matrix[9] = (iheight - 2*camMat[5] + 2*y0)/iheight;
-//		proj_matrix[10] = -(zfar+znear)/(zfar-znear);
-//		proj_matrix[11] = -1.0;
-//		proj_matrix[14] = -2.0*zfar*znear / (zfar-znear);
-		// OPCION B
-		proj_matrix[0] = 2.0*camMat[0]/iwidth;
-		proj_matrix[5] = 2.0*camMat[4]/iheight;
-		proj_matrix[8] = 1.0 - (2*x0/iwidth);
-		proj_matrix[9] = -1.0 + ( (2*y0+2)/iheight);
-		proj_matrix[10] = (zfar+znear)/(znear-zfar);
-		proj_matrix[11] = -1.0;
-		proj_matrix[14] = 2.0*zfar*znear / (znear-zfar);
-		
-//		proj_matrix[0] = 2.0*camMat[0]/iwidth;
-//		proj_matrix[5] = 2.0*camMat[4]/iheight;
-//		proj_matrix[8] = (iwidth - 2*camMat[2] + 2*x0)/iwidth;
-//		proj_matrix[9] = (-iheight + 2*camMat[5] + 2*y0)/iheight;
-//		proj_matrix[10] = -(zfar+znear)/(zfar-znear);
-//		proj_matrix[11] = -1.0;
-//		proj_matrix[14] = -2.0*zfar*znear / (zfar-znear);
-	}
     
 	/**
 	 * Method to find markers in a Mat given.
@@ -97,20 +55,22 @@ public class MarkerDetector {
 
 		// pass a copy because it modifies the src image
 		thres.copyTo(thres2);
-		Imgproc.findContours(thres2, contours2, hierarchy2, Imgproc.CV_RETR_TREE, Imgproc.CV_CHAIN_APPROX_NONE);
+		Imgproc.findContours(thres2, contours2, hierarchy2, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
 //		Imgproc.drawContours(frameDebug, contours2, -1, new Scalar(255,0,0),2);
 		// to each contour analyze if it is a paralelepiped likely to be a marker
 		Mat approxCurve = new Mat();
+		List<Point> approxPoints = new ArrayList<Point>();
 		for(int i=0;i<contours2.size();i++){
 			Mat contour = contours2.get(i);
 			// first check if it has enough points
-			int contourSize = contour.total();
+			int contourSize = (int)contour.total();
 			if(contourSize > in.cols()/5){
 				Imgproc.approxPolyDP(contour, approxCurve, contourSize*0.05, true);
+				Converters.Mat_to_vector_Point(approxCurve, approxPoints);
 				// check the polygon has 4 points
 				if(approxCurve.total()== 4){
 					// and if it is convex
-					if(Imgproc.isContourConvex(approxCurve)){
+					if(Imgproc.isContourConvex(approxPoints)){
 						// ensure the distance between consecutive points is large enough
 						double minDistFound = Double.MAX_VALUE;
 						int[] points = new int[8];// [x1 y1 x2 y2 x3 y3 x4 y4]
