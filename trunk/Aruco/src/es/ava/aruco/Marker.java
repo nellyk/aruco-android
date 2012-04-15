@@ -1,5 +1,6 @@
 package es.ava.aruco;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -11,8 +12,10 @@ import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Point3;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.opencv.utils.Converters;
 
 import es.ava.aruco.exceptions.ExtParamException;
 
@@ -131,7 +134,7 @@ public class Marker extends Vector<Point> implements Comparable<Marker>{
 		Calib3d.projectPoints(objectPoints, Rvec, Tvec, cp.getCameraMatrix(), cp.getDistCoeff(), imagePoints);
 		
 		List<Point> pts = new Vector<Point>();
-		Utils.Mat_to_vector_Point(imagePoints, pts);
+		Converters.Mat_to_vector_Point(imagePoints, pts);
 		// draw
 	    for (int i=0;i<4;i++){
 	        Core.line(frame ,pts.get(i),pts.get((i+1)%4), color, 2);
@@ -237,23 +240,13 @@ public class Marker extends Vector<Point> implements Comparable<Marker>{
 		
 		// set the obj 3D points
 		double halfSize = sizeMeters/2.0;
-		Mat objPoints = new Mat(4,3,CvType.CV_32FC1);// 4 points
-		objPoints.put(0, 0,
-				 -halfSize, -halfSize, 0,
-				 -halfSize,  halfSize, 0,
-				  halfSize,  halfSize, 0,
-				  halfSize, -halfSize, 0);
+		List<Point3> objPoints = new ArrayList<Point3>();
+		objPoints.add(new Point3(-halfSize, -halfSize,0));
+		objPoints.add(new Point3(-halfSize,  halfSize,0));
+		objPoints.add(new Point3( halfSize,  halfSize,0));
+		objPoints.add(new Point3( halfSize, -halfSize,0));
 
-		// set the image points (marker points)
-		Mat imagePoints = new Mat(4,2,CvType.CV_32FC1);
-		double[] buff = new double[8];
-        for(int i=0; i<4; i++) {
-            buff[i*2]   = this.get(i).x;
-            buff[i*2+1] = this.get(i).y;
-        }
-        imagePoints.put(0, 0, buff);
-
-		Calib3d.solvePnP(objPoints, imagePoints, camMatrix, distCoeffs, Rvec, Tvec);
+		Calib3d.solvePnP(objPoints, this, camMatrix, distCoeffs, Rvec, Tvec);
 //		rotateXAxis(Rvec);// TODO necesario??
 	}
 

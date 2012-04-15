@@ -15,6 +15,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import es.ava.aruco.Board;
 import es.ava.aruco.Marker;
+import es.ava.aruco.debug.FpsMeter;
 
 public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Callback, Runnable {
     private static final String TAG = "Sample::SurfaceView";
@@ -26,10 +27,14 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
     protected Vector<Marker>	 	mDetectedMarkers;
     protected Board					mBoardDetected;
     
+    private FpsMeter            mFps;
+    
     public ViewBase(Context context, Aruco3dActivity renderer) {
         super(context);
+        System.loadLibrary("opencv_java");
         mHolder = getHolder();
         mHolder.addCallback(this);
+        mFps = new FpsMeter();
         mDetectedMarkers = new Vector<Marker>();
         mBoardDetected = new Board();
         Log.i(TAG, "Instantiated new " + this.getClass());
@@ -89,6 +94,8 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
 
     public void run() {
         Log.i(TAG, "Starting processing thread");
+        mFps.init();
+        
         while (true) {
             Bitmap bmp = null;
 
@@ -102,6 +109,7 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
                 }
 
                 bmp = processFrame(mCamera, mHolder, mFrameWidth, mFrameHeight);
+                mFps.measure();
             }
 
             if (bmp != null) {
@@ -109,6 +117,7 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
                 if (canvas != null) {
                 	// drawBitmap
                 	canvas.drawBitmap(bmp, (canvas.getWidth() - bmp.getWidth()) / 2, (canvas.getHeight() - bmp.getHeight()) / 2, null);
+                    mFps.draw(canvas, (canvas.getWidth() - bmp.getWidth()) / 2, 0);
                     mHolder.unlockCanvasAndPost(canvas);
                 }
                 bmp.recycle();

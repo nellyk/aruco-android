@@ -1,12 +1,14 @@
 package es.ava.aruco;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.CvException;
-import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Point;
+import org.opencv.core.Point3;
 
 public class BoardDetector {
 	
@@ -48,23 +50,15 @@ public class BoardDetector {
 		// calculate extrinsics
 		if(camMatrix.rows()!=0 && markerSizeMeters>0 && detectedMarkers.size()>1){
 			// create necessary matrix
-			Mat objPoints = new Mat(4*nMarkInBoard, 3, CvType.CV_32FC1);
-			Mat imgPoints = new Mat(4*nMarkInBoard, 2, CvType.CV_32FC1);
+			List<Point3> objPoints = new ArrayList<Point3>();
+			List<Point> imgPoints = new ArrayList<Point>();
 			// size in meters of the distance between markers
 			float markerDistanceMeters = (conf.markerDistancePix) * markerSizeMeters / (conf.markerSizePix);
-			
-			int currIndex = 0;
+
 	        for(int y=0;y<height;y++)
 	            for(int x=0;x<width;x++) {
 					if(detected[y][x] != -1){
-						Vector<Point> points = detectedMarkers.get(detected[y][x]);
-						// set image points
-						double[] buffer = new double[8];
-						for(int p=0;p<4;p++){
-							buffer[p*2] = points.get(p).x;
-							buffer[p*2+1] = points.get(p).y;
-						}
-						imgPoints.put(currIndex, 0, buffer);
+						imgPoints.addAll(detectedMarkers.get(detected[y][x]));
 						
 						// translation to put the origin in the center
 	                    float TX=-(  ((detected.length-1)*(markerDistanceMeters+markerSizeMeters) +markerSizeMeters)/2);
@@ -72,12 +66,10 @@ public class BoardDetector {
 	                    //points in real reference system. We see the center in the bottom-left corner
 	                    float AY=x*(markerDistanceMeters+markerSizeMeters ) +TY;
 	                    float AX=y*(markerDistanceMeters+markerSizeMeters ) +TX;
-	                    objPoints.put(currIndex, 0, 
-	                    		AX,                  AY,                  0,
-	                    		AX,                  AY+markerSizeMeters, 0,
-	                    		AX+markerSizeMeters, AY+markerSizeMeters, 0,
-	                    		AX+markerSizeMeters, AY,                  0);
-	                    currIndex+=4;
+	                    objPoints.add(new Point3(AX,AY,0));
+	                    objPoints.add(new Point3(AX,AY+markerSizeMeters, 0));
+	                    objPoints.add(new Point3(AX+markerSizeMeters,AY+markerSizeMeters,0));
+	                    objPoints.add(new Point3(AX+markerSizeMeters,AY,0));
 					}
 			}
 	        // TODO get the opencv calls out of the loops

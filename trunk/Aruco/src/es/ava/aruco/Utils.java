@@ -1,11 +1,8 @@
 package es.ava.aruco;
 
-import java.util.List;
-
 import org.opencv.calib3d.Calib3d;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.core.Size;
 
 import es.ava.aruco.exceptions.CPException;
@@ -33,28 +30,7 @@ public abstract class Utils {
             }
         }
 	}
-	
-	/**
-	 * Adaption of the org.opencv.utils, in this one the points are set by rows in the mat.
-	 * It the receives a CV_32FC2 matrix.
-	 * @param m matrix with the points
-	 * @param pts output vector with points
-	 */
-    protected static void Mat_to_vector_Point(Mat m, List<Point> pts) {
-        if(pts == null)
-            throw new java.lang.IllegalArgumentException();
-        int rows = m.rows();
-        if(!CvType.CV_32FC2.equals(m.type()) ||  m.cols()!=1 )
-            throw new java.lang.IllegalArgumentException();
-
-        pts.clear();
-        float[] buff = new float[2*rows];
-        m.get(0, 0, buff);
-        for(int i=0; i<rows; i++) {
-            pts.add( new Point(buff[i*2], buff[i*2+1]) );
-        }
-    }
-    
+	    
 	protected static void rotateXAxis(Mat rotation){
 		// get the matrix corresponding to the rotation vector
 		Mat R = new Mat(3,3,CvType.CV_64FC1);

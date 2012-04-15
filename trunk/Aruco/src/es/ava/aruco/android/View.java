@@ -1,6 +1,7 @@
 package es.ava.aruco.android;
 
-import org.opencv.android;
+import java.util.Date;
+
 import org.opencv.core.CvException;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
@@ -9,6 +10,7 @@ import org.opencv.highgui.VideoCapture;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import es.ava.aruco.BoardDetector;
 import es.ava.aruco.CameraParameters;
@@ -61,14 +63,18 @@ class View extends ViewBase {
     @Override
     protected Bitmap processFrame(VideoCapture capture, SurfaceHolder holder, int width, int height) {
         capture.retrieve(mFrame, Highgui.CV_CAP_ANDROID_COLOR_FRAME_RGBA);
-		
+
+        
 		mDetector.detect(mFrame, mDetectedMarkers, mCamParam.getCameraMatrix(), mCamParam.getDistCoeff(), markerSizeMeters,mFrame);
-		mRenderer.onDetection(mFrame, mDetectedMarkers);
 		
+		mRenderer.onDetection(mFrame, mDetectedMarkers);
+
 		if(mRenderer.lookForBoard == true){
 			float prob=0f;
 			try {
+				Date initial = new Date();
 				prob = mBDetector.detect(mDetectedMarkers, mRenderer.mBC, mBoardDetected, mCamParam, markerSizeMeters);
+				Log.d(VIEW_LOG_TAG, "boarddetection took: " + ((new Date()).getTime() - initial.getTime()));
 			} catch (CvException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -77,7 +83,7 @@ class View extends ViewBase {
 		}
         Bitmap bmp = Bitmap.createBitmap(mFrame.cols(), mFrame.rows(), Bitmap.Config.ARGB_8888);
 
-        boolean ret = android.MatToBitmap(mFrame,bmp);
+        boolean ret = org.opencv.android.Utils.matToBitmap(mFrame,bmp);
 
         if (ret)
             return bmp;
@@ -93,7 +99,7 @@ class View extends ViewBase {
         synchronized (this) {
             // Explicitly deallocate Mats
         	if(mFrame != null)
-        		mFrame.dispose();
+        		mFrame.release();
         	mFrame = null;
         }
     }
