@@ -5,7 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import org.opencv.android;
+import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
@@ -22,7 +22,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
-import aruco.min3d.R;
 import es.ava.aruco.Marker;
 
 public class NewMarkerActivity extends Activity{
@@ -53,7 +52,7 @@ public class NewMarkerActivity extends Activity{
 			Mat marker = Marker.createMarkerImage(Integer.valueOf(mMarkerId.getText().toString()),280);
 			Bitmap bmp = Bitmap.createBitmap(marker.cols(), marker.rows(), Bitmap.Config.ARGB_8888);
 			Imgproc.cvtColor(marker, marker, Imgproc.COLOR_GRAY2RGBA, 4);
-			android.MatToBitmap(marker, bmp);
+			Utils.matToBitmap(marker, bmp);
 			mMarkerView.setImageBitmap(bmp);
 			mSaveButton.setEnabled(true);
 		} catch(Exception e){

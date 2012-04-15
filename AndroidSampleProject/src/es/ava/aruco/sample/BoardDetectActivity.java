@@ -34,7 +34,7 @@ public class BoardDetectActivity extends Aruco3dActivity {
 		ogre.rotation().z = -90;
 		ogre.rotation().x = -90;
 		scene.addChild(ogre);
-		ogre.setFps(70);
+		ogre.setFps(50);
 		ogre.play();
 	}
 
