@@ -28,10 +28,10 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
     protected Board					mBoardDetected;
     
     private FpsMeter            mFps;
+	public boolean mShowFps;
     
-    public ViewBase(Context context, Aruco3dActivity renderer) {
+    public ViewBase(Context context) {
         super(context);
-        System.loadLibrary("opencv_java");
         mHolder = getHolder();
         mHolder.addCallback(this);
         mFps = new FpsMeter();
@@ -117,7 +117,8 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
                 if (canvas != null) {
                 	// drawBitmap
                 	canvas.drawBitmap(bmp, (canvas.getWidth() - bmp.getWidth()) / 2, (canvas.getHeight() - bmp.getHeight()) / 2, null);
-                    mFps.draw(canvas, (canvas.getWidth() - bmp.getWidth()) / 2, 0);
+                	if(mShowFps)
+                		mFps.draw(canvas, (canvas.getWidth() - bmp.getWidth()) / 2, 0);
                     mHolder.unlockCanvasAndPost(canvas);
                 }
                 bmp.recycle();
