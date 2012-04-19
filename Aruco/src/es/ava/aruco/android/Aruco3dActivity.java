@@ -18,10 +18,12 @@ import es.ava.aruco.Marker;
 
 public abstract class Aruco3dActivity extends RendererActivity {
 	
-	public boolean lookForBoard;
+	public boolean mLookForBoard;
 	public CameraParameters mCamParam;
 	public float mMarkerSize;
 	public BoardConfiguration mBC;
+	public boolean mShowFps;
+	
 	
 	View view;// TODO set to private¿?
 	
@@ -50,7 +52,7 @@ public abstract class Aruco3dActivity extends RendererActivity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
 		addContentView(_glSurfaceView, new LayoutParams(LayoutParams.FILL_PARENT, 
 				LayoutParams.FILL_PARENT));
-		view = new View(this, this, mCamParam, mMarkerSize);
+		view = new View(this, this, mCamParam, mMarkerSize, mShowFps);
 		addContentView(view, new LayoutParams(LayoutParams.FILL_PARENT,
 				LayoutParams.FILL_PARENT));
 	}

@@ -27,14 +27,15 @@ class View extends ViewBase {
     protected MarkerDetector mDetector;
     protected BoardDetector mBDetector;
     
-    public View(Context context, Aruco3dActivity renderer, CameraParameters cp, float markerSize) {
-        super(context, renderer);
+    public View(Context context, Aruco3dActivity renderer, CameraParameters cp, float markerSize, boolean showFps) {
+        super(context);
         
         mCamParam = new CameraParameters(cp);
         mDetector = new MarkerDetector();
         mBDetector = new BoardDetector();
         mRenderer = renderer;
         markerSizeMeters = markerSize;
+        mShowFps = showFps;
     }
 
     @Override
@@ -69,7 +70,7 @@ class View extends ViewBase {
 		
 		mRenderer.onDetection(mFrame, mDetectedMarkers);
 
-		if(mRenderer.lookForBoard == true){
+		if(mRenderer.mLookForBoard == true){
 			float prob=0f;
 			try {
 				Date initial = new Date();
