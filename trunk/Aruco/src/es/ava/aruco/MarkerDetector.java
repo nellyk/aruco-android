@@ -47,7 +47,10 @@ public class MarkerDetector {
 	public void detect(Mat in, Vector<Marker> detectedMarkers, Mat camMatrix, Mat distCoeff,
 			float markerSizeMeters, Mat frameDebug){
 		Vector<Marker> candidateMarkers = new Vector<Marker>();
-		detectedMarkers.clear();
+		// the detection in the incoming frame will be done in a different vector
+		// because this will allow the ontouchlistener in View
+		// to have a valid detectedMarkers vector longer
+		Vector<Marker> newMarkers = new Vector<Marker>();
 		
 		// do the threshold of image and detect contours
 		Imgproc.cvtColor(in, grey, Imgproc.COLOR_RGBA2GRAY);
@@ -161,7 +164,7 @@ public class MarkerDetector {
 				if(marker.checkBorder()){
 					int id = marker.calculateMarkerId();
 					if(id != -1){
-						detectedMarkers.add(marker);
+						newMarkers.add(marker);
 						// rotate the points of the marker so they are always in the same order no matter the camera orientation
 						Collections.rotate(marker, 4-marker.getRotations());
 					}
@@ -171,14 +174,14 @@ public class MarkerDetector {
 		// TODO refine using pixel accuracy
 		
 		// now sort by id and check that each marker is only detected once
-		Collections.sort(detectedMarkers);
+		Collections.sort(newMarkers);
 		toRemove.clear();
-		for(int i=0;i<detectedMarkers.size();i++)
+		for(int i=0;i<newMarkers.size();i++)
 			toRemove.add(0);
 		
-		for(int i=0;i<detectedMarkers.size()-1;i++){
-			if(detectedMarkers.get(i).id == detectedMarkers.get(i+1).id)
-				if(detectedMarkers.get(i).perimeter()<detectedMarkers.get(i+1).perimeter())
+		for(int i=0;i<newMarkers.size()-1;i++){
+			if(newMarkers.get(i).id == newMarkers.get(i+1).id)
+				if(newMarkers.get(i).perimeter()<newMarkers.get(i+1).perimeter())
 					toRemove.set(i, 1);
 				else
 					toRemove.set(i+1, 1);
@@ -186,12 +189,14 @@ public class MarkerDetector {
 		
 		for(int i=toRemove.size()-1;i>=0;i--)// done in inverse order in case we need to remove more than one element
 			if(toRemove.get(i) == 1)
-				detectedMarkers.remove(i);
+				newMarkers.remove(i);
 		
 		// detect the position of markers if desired
-		for(int i=0;i<detectedMarkers.size();i++){
-			detectedMarkers.get(i).calculateExtrinsics(camMatrix, distCoeff, markerSizeMeters);
+		for(int i=0;i<newMarkers.size();i++){
+			newMarkers.get(i).calculateExtrinsics(camMatrix, distCoeff, markerSizeMeters);
 		}
+		detectedMarkers.setSize(newMarkers.size());
+		Collections.copy(detectedMarkers, newMarkers);
 	}
 	
     /**

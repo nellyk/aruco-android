@@ -122,7 +122,6 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
                     mHolder.unlockCanvasAndPost(canvas);
                 }
                 bmp.recycle();
-                mDetectedMarkers.clear();
             }
         }
 
