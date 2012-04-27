@@ -63,15 +63,19 @@ public class Min3dTestActivity extends Aruco3dActivity {
 
 	@Override
 	public void initDetectionParam() {
-		lookForBoard = false;
+		mLookForBoard = false;
 		mCamParam = new CameraParameters();
 		mMarkerSize = 0.034f;
+		mShowFps = false;
 	}
 
 	@Override
-	public void onDetection(Mat frame, Vector<Marker> detectedMarkers) {
-		for(int i=0;i<detectedMarkers.size();i++)
-			detectedMarkers.get(i).draw(frame, new Scalar(0,255,0), 3, true);
+	public void onDetection(Mat frame, Vector<Marker> detectedMarkers, int idSelected) {
+		for(Marker m : detectedMarkers){
+			m.draw(frame, new Scalar(0,255,0), 3, true);
+			if(m.getMarkerId() == idSelected)
+				m.draw3dCube(frame, mCamParam, new Scalar(0,0,255));
+		}
 		if(detectedMarkers.size() > 2)
 			try {
 				scene.addChild(cube);
