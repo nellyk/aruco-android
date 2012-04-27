@@ -4,23 +4,29 @@ import java.util.Date;
 
 import org.opencv.core.CvException;
 import org.opencv.core.Mat;
+import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.highgui.Highgui;
 import org.opencv.highgui.VideoCapture;
+import org.opencv.imgproc.Imgproc;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
+import android.view.View.OnTouchListener;
 import es.ava.aruco.BoardDetector;
 import es.ava.aruco.CameraParameters;
+import es.ava.aruco.Marker;
 import es.ava.aruco.MarkerDetector;
 import es.ava.aruco.Utils;
 import es.ava.aruco.exceptions.CPException;
 import es.ava.aruco.exceptions.ExtParamException;
 
-class View extends ViewBase {
+class View extends ViewBase implements OnTouchListener{
 	private Mat mFrame;
+    private int mIdSelected;
     protected CameraParameters mCamParam;
     protected float markerSizeMeters;
     protected Aruco3dActivity	mRenderer;
@@ -30,6 +36,7 @@ class View extends ViewBase {
     public View(Context context, Aruco3dActivity renderer, CameraParameters cp, float markerSize, boolean showFps) {
         super(context);
         
+        setOnTouchListener(this);
         mCamParam = new CameraParameters(cp);
         mDetector = new MarkerDetector();
         mBDetector = new BoardDetector();
@@ -68,7 +75,7 @@ class View extends ViewBase {
         
 		mDetector.detect(mFrame, mDetectedMarkers, mCamParam.getCameraMatrix(), mCamParam.getDistCoeff(), markerSizeMeters,mFrame);
 		
-		mRenderer.onDetection(mFrame, mDetectedMarkers);
+		mRenderer.onDetection(mFrame, mDetectedMarkers, mIdSelected);
 
 		if(mRenderer.mLookForBoard == true){
 			float prob=0f;
@@ -104,4 +111,19 @@ class View extends ViewBase {
         	mFrame = null;
         }
     }
+
+	@Override
+	public boolean onTouch(android.view.View v, MotionEvent event) {
+		float x = event.getX();
+		float y = event.getY();
+		boolean found = false;
+		for(int i=0;i<mDetectedMarkers.size() && !found;i++){
+			Marker m = mDetectedMarkers.get(i);
+			if(Imgproc.pointPolygonTest(m, new Point(x,y), false)>=0){
+				found = true;
+				mIdSelected = m.getMarkerId();
+			}
+		}
+		return false;
+	}
 }

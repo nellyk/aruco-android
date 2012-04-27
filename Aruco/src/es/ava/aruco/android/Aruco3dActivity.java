@@ -25,7 +25,7 @@ public abstract class Aruco3dActivity extends RendererActivity {
 	public boolean mShowFps;
 	
 	
-	View view;// TODO set to private¿?
+	public View view;// TODO set to private¿?
 	
 	protected void onCreate(Bundle savedInstanceState) 
 	{
@@ -58,6 +58,6 @@ public abstract class Aruco3dActivity extends RendererActivity {
 	}
 	
 	public abstract void initDetectionParam();
-	public abstract void onDetection(Mat frame, Vector<Marker> detectedMarkers);
+	public abstract void onDetection(Mat frame, Vector<Marker> detectedMarkers, int idSelected);
 	public abstract void onBoardDetection(Mat mFrame, Board mBoardDetected, float probability);
 }
