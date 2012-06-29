@@ -3,5 +3,6 @@
       package="es.ava.aruco"
       android:versionCode="1"
       android:versionName="1.0">
-
+		
+		<activity android:name=".android.CameraCalibrationActivity" />
 </manifest>

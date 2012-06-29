@@ -1,22 +1,25 @@
 package es.ava.aruco;
 
-import java.util.List;
 import java.util.Vector;
 
 import min3d.core.Object3d;
 
-import org.opencv.calib3d.Calib3d;
-import org.opencv.core.Core;
 import org.opencv.core.CvException;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.opencv.utils.Converters;
 
 import es.ava.aruco.exceptions.ExtParamException;
 
+/**
+ * Class representing a board of markers. Each board will be identified
+ * by its configuration. A 3d model can be attached to a board and by default
+ * will be rendered on its center. A 3d axis can be drawn as well using OpenCV
+ * functions. 
+ * @author Rafael Ortega
+ *
+ */
 public class Board extends Vector<Marker>{
 	private static final long serialVersionUID = 1L;
 	
@@ -65,34 +68,14 @@ public class Board extends Vector<Marker>{
 	    return tableImage;
 	}
 	
-	public void draw3dAxis(Mat frame, CameraParameters cp, Scalar color){
-		double height = 2*this.get(0).ssize;
-		Mat objectPoints = new Mat(4,3,CvType.CV_32FC1);
-		objectPoints.put(0, 0,
-				0,      0,      0,
-				height, 0,      0,
-				0,      height, 0,
-				0,      0,      height);
-		
-		Mat imagePoints = new Mat();
-		Calib3d.projectPoints( objectPoints, Rvec, Tvec,
-				cp.getCameraMatrix(), cp.getDistCoeff(), imagePoints);
-		List<Point> pts = new Vector<Point>();
-		Converters.Mat_to_vector_Point(imagePoints, pts);
-		
-		Core.line(frame ,pts.get(0),pts.get(1), color, 2);
-		Core.line(frame ,pts.get(0),pts.get(2), color, 2);
-		Core.line(frame ,pts.get(0),pts.get(3), color, 2);
-
-		Core.putText(frame, "X", pts.get(1), Core.FONT_HERSHEY_SIMPLEX, 0.5,  color,2);
-		Core.putText(frame, "Y", pts.get(2), Core.FONT_HERSHEY_SIMPLEX, 0.5,  color,2);
-		Core.putText(frame, "Z", pts.get(3), Core.FONT_HERSHEY_SIMPLEX, 0.5,  color,2);
-	}
-	
 	public void set3dObject(Object3d object) throws ExtParamException {
 		this.object = object;
 		double[] matrix = new double[16];
 		Utils.glGetModelViewMatrix(matrix,Rvec,Tvec);
 		this.object.setModelViewMatrix(matrix);
+	}
+	
+	public void draw3dAxis(Mat frame, CameraParameters cp, Scalar color){
+		Utils.draw3dAxis(frame, cp, color, 2*this.get(0).ssize, Rvec, Tvec);
 	}
 }

@@ -40,15 +40,38 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
         Log.i(TAG, "Instantiated new " + this.getClass());
     }
 
-    public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
-        Log.i(TAG, "surfaceCreated");
+    public boolean openCamera() {
+        Log.i(TAG, "openCamera");
+        synchronized (this) {
+	        releaseCamera();
+	        mCamera = new VideoCapture(Highgui.CV_CAP_ANDROID);
+	        if (!mCamera.isOpened()) {
+	            mCamera.release();
+	            mCamera = null;
+	            Log.e(TAG, "Failed to open native camera");
+	            return false;
+	        }
+	    }
+        return true;
+    }
+    
+    public void releaseCamera() {
+        Log.i(TAG, "releaseCamera");
+        synchronized (this) {
+	        if (mCamera != null) {
+	                mCamera.release();
+	                mCamera = null;
+            }
+        }
+    }
+    
+    public void setupCamera(int width, int height) {
+        Log.i(TAG, "setupCamera("+width+", "+height+")");
         synchronized (this) {
             if (mCamera != null && mCamera.isOpened()) {
-                Log.i(TAG, "before mCamera.getSupportedPreviewSizes()");
                 List<Size> sizes = mCamera.getSupportedPreviewSizes();
-                Log.i(TAG, "after mCamera.getSupportedPreviewSizes()");
-                mFrameWidth = width;
-                mFrameHeight = height;
+                int mFrameWidth = width;
+                int mFrameHeight = height;
 
                 // selecting optimal camera preview size
                 {
@@ -66,29 +89,75 @@ public abstract class ViewBase extends SurfaceView implements SurfaceHolder.Call
                 mCamera.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, mFrameHeight);
             }
         }
-    }
 
+    }
+    
+    public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
+        Log.i(TAG, "surfaceChanged");
+        setupCamera(width, height);
+    }
+    
     public void surfaceCreated(SurfaceHolder holder) {
         Log.i(TAG, "surfaceCreated");
-        mCamera = new VideoCapture(Highgui.CV_CAP_ANDROID);
-        if (mCamera.isOpened()) {
-            (new Thread(this)).start();
-        } else {
-            mCamera.release();
-            mCamera = null;
-            Log.e(TAG, "Failed to open native camera");
-        }
+        (new Thread(this)).start();
     }
-
+    
     public void surfaceDestroyed(SurfaceHolder holder) {
         Log.i(TAG, "surfaceDestroyed");
-        if (mCamera != null) {
-            synchronized (this) {
-                mCamera.release();
-                mCamera = null;
-            }
-        }
+        releaseCamera();
     }
+    
+//    public void surfaceChanged(SurfaceHolder _holder, int format, int width, int height) {
+//        Log.i(TAG, "surfaceCreated");
+//        synchronized (this) {
+//            if (mCamera != null && mCamera.isOpened()) {
+//                List<Size> sizes = mCamera.getSupportedPreviewSizes();
+//                mFrameWidth = width;
+//                mFrameHeight = height;
+//
+//                // selecting optimal camera preview size
+//                {
+//                    double minDiff = Double.MAX_VALUE;
+//                    for (Size size : sizes) {
+//                        if (Math.abs(size.height - height) < minDiff) {
+//                            mFrameWidth = (int) size.width;
+//                            mFrameHeight = (int) size.height;
+//                            minDiff = Math.abs(size.height - height);
+//                        }
+//                    }
+//                }
+//
+//                mCamera.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, mFrameWidth);
+//                mCamera.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, mFrameHeight);
+//
+////              mCamera.set(Highgui.CV_CAP_PROP_FRAME_WIDTH, 768);
+////              mCamera.set(Highgui.CV_CAP_PROP_FRAME_HEIGHT, 432);
+//                
+//            }
+//        }
+//    }
+//
+//    public void surfaceCreated(SurfaceHolder holder) {
+//        Log.i(TAG, "surfaceCreated");
+//        mCamera = new VideoCapture(Highgui.CV_CAP_ANDROID);
+//        if (mCamera.isOpened()) {
+//            (new Thread(this)).start();
+//        } else {
+//            mCamera.release();
+//            mCamera = null;
+//            Log.e(TAG, "Failed to open native camera");
+//        }
+//    }
+//
+//    public void surfaceDestroyed(SurfaceHolder holder) {
+//        Log.i(TAG, "surfaceDestroyed");
+//        if (mCamera != null) {
+//            synchronized (this) {
+//                mCamera.release();
+//                mCamera = null;
+//            }
+//        }
+//    }
 
     protected abstract Bitmap processFrame(VideoCapture capture, SurfaceHolder holder, int width, int height);
 

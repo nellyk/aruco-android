@@ -1,13 +1,28 @@
 package es.ava.aruco;
 
+import java.util.List;
+import java.util.Vector;
+
 import org.opencv.calib3d.Calib3d;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.MatOfPoint3f;
+import org.opencv.core.Point;
+import org.opencv.core.Point3;
+import org.opencv.core.Scalar;
 import org.opencv.core.Size;
+import org.opencv.utils.Converters;
 
 import es.ava.aruco.exceptions.CPException;
 import es.ava.aruco.exceptions.ExtParamException;
 
+/**
+ * Misc utilities for aruco library.
+ * @author Rafael Ortega
+ *
+ */
 public abstract class Utils {
 	
 	/**
@@ -94,46 +109,44 @@ public abstract class Utils {
 	    para[2][3]=tvec[2];
 	    double scale=1;
 
-	    double[] modelview_matrix1 = new double[16];
 	    // R1C2
-	    modelview_matrix1[0 + 0*4] = para[0][0];
-	    modelview_matrix1[0 + 1*4] = para[0][1];
-	    modelview_matrix1[0 + 2*4] = para[0][2];
-	    modelview_matrix1[0 + 3*4] = para[0][3];
+	    modelview_matrix[0 + 0*4] = para[0][0];
+	    modelview_matrix[0 + 1*4] = para[0][1];
+	    modelview_matrix[0 + 2*4] = para[0][2];
+	    modelview_matrix[0 + 3*4] = para[0][3];
 	    // R2
-	    modelview_matrix1[1 + 0*4] = para[1][0];
-	    modelview_matrix1[1 + 1*4] = para[1][1];
-	    modelview_matrix1[1 + 2*4] = para[1][2];
-	    modelview_matrix1[1 + 3*4] = para[1][3];
+	    modelview_matrix[1 + 0*4] = para[1][0];
+	    modelview_matrix[1 + 1*4] = para[1][1];
+	    modelview_matrix[1 + 2*4] = para[1][2];
+	    modelview_matrix[1 + 3*4] = para[1][3];
 	    // R3
-	    modelview_matrix1[2 + 0*4] = -para[2][0];
-	    modelview_matrix1[2 + 1*4] = -para[2][1];
-	    modelview_matrix1[2 + 2*4] = -para[2][2];
-	    modelview_matrix1[2 + 3*4] = -para[2][3];
+	    modelview_matrix[2 + 0*4] = -para[2][0];
+	    modelview_matrix[2 + 1*4] = -para[2][1];
+	    modelview_matrix[2 + 2*4] = -para[2][2];
+	    modelview_matrix[2 + 3*4] = -para[2][3];
 	    
-	    modelview_matrix1[3 + 0*4] = 0.0f;
-	    modelview_matrix1[3 + 1*4] = 0.0f;
-	    modelview_matrix1[3 + 2*4] = 0.0f;
-	    modelview_matrix1[3 + 3*4] = 1.0f;
+	    modelview_matrix[3 + 0*4] = 0.0f;
+	    modelview_matrix[3 + 1*4] = 0.0f;
+	    modelview_matrix[3 + 2*4] = 0.0f;
+	    modelview_matrix[3 + 3*4] = 1.0f;
 	    if (scale != 0.0)
 	    {
-	        modelview_matrix1[12] *= scale;
-	        modelview_matrix1[13] *= scale;
-	        modelview_matrix1[14] *= scale;
+	        modelview_matrix[12] *= scale;
+	        modelview_matrix[13] *= scale;
+	        modelview_matrix[14] *= scale;
 	    }
 
 	    // rotate 90º around the x axis
 	    // rotating around x axis in OpenGL is equivalent to
 	    // multiply the model matrix by the matrix:
 	    // 1, 0, 0, 0, 0, cos(a), sin(a), 0, 0, -sin(a), cos(a), 0, 0, 0, 0, 1
-	    double[] auxRotMat = new double[]{
-	    	1, 0,  0, 0,
-	    	0, 0, 1, 0,
-	    	0, -1,  0, 0,
-	    	0, 0,  0, 1
-	    };
-	    
-	    Utils.matrixProduct(modelview_matrix1, auxRotMat, modelview_matrix);
+//	    double[] auxRotMat = new double[]{
+//	    	1, 0,  0, 0,
+//	    	0, 0, 1, 0,
+//	    	0, -1,  0, 0,
+//	    	0, 0,  0, 1
+//	    };
+//	    Utils.matrixProduct(modelview_matrix1, auxRotMat, modelview_matrix);
 	}
 	
 	public static void myProjectionMatrix(CameraParameters cp, Size size,
@@ -163,7 +176,7 @@ public abstract class Utils {
 		proj_matrix[15] = 0;
 	}
 	
-	// TODO for debugging
+	// for debugging
 	public static void glIdentityMatrix(double[] m){
 		m[0] = 1;
 		m[1] = 0;
@@ -213,6 +226,31 @@ public abstract class Utils {
 
         argConvGLcpara2( cparam, size.width, size.height, gnear, gfar, proj_matrix, invert );
     }
+    
+	public static void draw3dAxis(Mat frame, CameraParameters cp, Scalar color, double height, Mat Rvec, Mat Tvec){
+//		Mat objectPoints = new Mat(4,3,CvType.CV_32FC1);
+		MatOfPoint3f objectPoints = new MatOfPoint3f();
+		Vector<Point3> points = new Vector<Point3>();
+		points.add(new Point3(0,     0,     0));
+		points.add(new Point3(height,0,     0));
+		points.add(new Point3(0,     height,0));
+		points.add(new Point3(0,     0,     height)); 
+		objectPoints.fromList(points);
+		
+		MatOfPoint2f imagePoints = new MatOfPoint2f();
+		Calib3d.projectPoints( objectPoints, Rvec, Tvec,
+				cp.getCameraMatrix(), cp.getDistCoeff(), imagePoints);
+		List<Point> pts = new Vector<Point>();
+		Converters.Mat_to_vector_Point(imagePoints, pts);
+		
+		Core.line(frame ,pts.get(0),pts.get(1), color, 2);
+		Core.line(frame ,pts.get(0),pts.get(2), color, 2);
+		Core.line(frame ,pts.get(0),pts.get(3), color, 2);
+
+		Core.putText(frame, "X", pts.get(1), Core.FONT_HERSHEY_SIMPLEX, 0.5,  color,2);
+		Core.putText(frame, "Y", pts.get(2), Core.FONT_HERSHEY_SIMPLEX, 0.5,  color,2);
+		Core.putText(frame, "Z", pts.get(3), Core.FONT_HERSHEY_SIMPLEX, 0.5,  color,2);
+	}
     
 	private static void argConvGLcpara2(double[][] cparam, double width, double height, double gnear,
 			double gfar, double[] m, boolean invert) throws ExtParamException{
@@ -279,25 +317,13 @@ public abstract class Utils {
 	    double[][] Cpara = new double[3][4];
 	    double     rem1, rem2, rem3;
 
-//	    if ( source[2][3] >= 0 ){// TODO siempre va a ser 0
-	        for ( r = 0; r < 3; r++ )
-	        {
-	            for ( c = 0; c < 4; c++ )
-	            {
-	                Cpara[r][c] = source[r][c];
-	            }
-	        }
-//	    }
-//	    else
-//	    {
-//	        for ( r = 0; r < 3; r++ )
-//	        {
-//	            for ( c = 0; c < 4; c++ )
-//	            {
-//	                Cpara[r][c] = -(source[r][c]);
-//	            }
-//	        }
-//	    }
+        for ( r = 0; r < 3; r++ )
+        {
+            for ( c = 0; c < 4; c++ )
+            {
+                Cpara[r][c] = source[r][c];
+            }
+        }
 
 	    for ( r = 0; r < 3; r++ )
 	    {
