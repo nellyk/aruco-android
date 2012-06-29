@@ -24,9 +24,13 @@ public class MenuActivity extends ListActivity{
 	}
 	
 	private SampleActivity[] _items = {
-			new SampleActivity("Board detection", BoardDetectActivity.class),
+			new SampleActivity("Animated model on board", BoardDetectActivity.class),
 			new SampleActivity("Markers detection", Min3dTestActivity.class),
-			new SampleActivity("Create marker", NewMarkerActivity.class)
+			new SampleActivity("OBJ in a marker", SingleMarkerOBJActivity.class),
+			new SampleActivity("Most simple example", MostSimpleActivity.class),
+			new SampleActivity("Create marker", NewMarkerActivity.class),
+			new SampleActivity("Selectable model", ChooseModelActivity.class),
+//			new SampleActivity("Calibrate camera", CameraCalibrationActivity.class)
 	};
 	
     @Override
