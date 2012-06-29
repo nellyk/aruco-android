@@ -40,7 +40,27 @@
             android:screenOrientation="landscape"
             android:configChanges="keyboardHidden|orientation" >
         </activity>
+        <activity
+            android:name=".MostSimpleActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation" >
+        </activity>
+        <activity
+            android:name=".SingleMarkerOBJActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation" >
+        </activity>
+        <activity
+            android:name=".ChooseModelActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation" >
+        </activity>
         <activity android:name=".NewMarkerActivity" android:label="@string/app_name"/>
+        
+        <activity android:name="es.ava.aruco.android.CameraCalibrationActivity" />
     </application>
 
 </manifest>

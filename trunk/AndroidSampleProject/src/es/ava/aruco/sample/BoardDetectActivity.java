@@ -12,11 +12,22 @@ import org.opencv.core.Scalar;
 
 import es.ava.aruco.Board;
 import es.ava.aruco.BoardConfiguration;
-import es.ava.aruco.CameraParameters;
 import es.ava.aruco.Marker;
 import es.ava.aruco.android.Aruco3dActivity;
 import es.ava.aruco.exceptions.ExtParamException;
 
+/**
+ * This activity loads an object animated on a board. The AnimationObject3d class from
+ * min3d is used. The markers ids go from 200 to 224, are 100 pix sized and keep 
+ * a distance among them of 20 pix. All that information is loaded into mBC parameter.
+ * 
+ * Through the updateScene method the model is allowed to traslate in the X axis.
+ * 
+ * Besides, a 3d axis will be drawn on the board.
+ * 
+ * @author Rafael Ortega
+ *
+ */
 public class BoardDetectActivity extends Aruco3dActivity {
 	private AnimationObject3d ogre;
 	
@@ -33,13 +44,15 @@ public class BoardDetectActivity extends Aruco3dActivity {
 		mShowFps = false;
 		mLookForBoard = true;
 		mBC = new BoardConfiguration(5,5,markersId,100,20);
-		mCamParam = new CameraParameters();
 		mMarkerSize = 0.034f;
 	}
 
 	@Override
 	public void updateScene() {
-
+		if(ogre.isVisible()){
+			ogre.position().x = mView.mAngleX()/100f;
+//			ogre.rotation().z = mView.mAngleX();
+		}
 	}
 
 	@Override
@@ -58,25 +71,28 @@ public class BoardDetectActivity extends Aruco3dActivity {
 
 		ogre = parser.getParsedAnimationObject();
 		ogre.scale().x = ogre.scale().y = ogre.scale().z = mMarkerSize/20;
-		ogre.rotation().z = -90;
-		ogre.rotation().x = -90;
 		scene.addChild(ogre);
-		ogre.setFps(50);
+		ogre.setFps(20);
 		ogre.play();
+		ogre.isVisible(false);
+		scene.addChild(ogre);
 	}
 
 	@Override
 	public void onBoardDetection(Mat mFrame, Board mBoardDetected, float probability) {
 		if(probability > 0.2){
-			mBoardDetected.draw3dAxis(mFrame, mCamParam, new Scalar(255,0,0));
+			mBoardDetected.draw3dAxis(mFrame, super.mView.mCamParam, new Scalar(255,0,0));
 			try {
-				scene.addChild(ogre);
-				mBoardDetected.set3dObject(ogre);
+				if(ogre != null){
+					ogre.isVisible(true);
+					mBoardDetected.set3dObject(ogre);
+				}
 			} catch (ExtParamException e) {
 				e.printStackTrace();
 			}
 		}
 		else
-			scene.removeChild(ogre);
+			if(ogre != null)
+				ogre.isVisible(false);
 	}
 }
