@@ -1,7 +1,6 @@
 package es.ava.aruco;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
@@ -27,7 +26,7 @@ import es.ava.aruco.exceptions.ExtParamException;
  * a valid code inside it. 
  *
  */
-public class Marker extends MatOfPoint2f implements Comparable<Marker>{
+public class MarkerVector extends Vector<Point> implements Comparable<Marker>{
 
 	private Object3dContainer object;
 	
@@ -42,9 +41,7 @@ public class Marker extends MatOfPoint2f implements Comparable<Marker>{
 	private Mat Rvec;
 	private Mat Tvec;
 	
-	private Vector<Point> points;
-	
-	public Marker(float size, Vector<Point> p){
+	public MarkerVector(float size){
 		id = -1;
 		ssize = size;
 		// TODO revise how the mats are initialized, better to create them with the proper type
@@ -53,27 +50,23 @@ public class Marker extends MatOfPoint2f implements Comparable<Marker>{
 		Rvec = new Mat(3,1,CvType.CV_64FC1);
 		Tvec = new Mat(3,1,CvType.CV_64FC1);
 		mat = new Mat();
-		points = new Vector<Point>();
-		for(int i=0;i<p.size();i++)
-			points.add(p.get(i));
-		this.fromList(points);
 	}
 	
 	public void draw(Mat in, Scalar color, int lineWidth, boolean writeId){
-	    if (total()!=4)
+	    if (size()!=4)
 	    	return;
 
 	    // TODO loop¿?
 	    for(int i=0;i<4;i++)
-	    	Core.line(in, points.get(i), points.get((i+1)%4), color, lineWidth);
+	    	Core.line(in, this.get(i), this.get((i+1)%4), color, lineWidth);
 	    if(writeId){
 	    	String cad = new String();
 	    	cad = "id="+id;
 	    	// determine the centroid
 	    	Point cent = new Point(0,0);
 	    	for(int i=0;i<4;i++){
-	    		cent.x += points.get(i).x;
-	    		cent.y += points.get(i).y;
+	    		cent.x += this.get(i).x;
+	    		cent.y += this.get(i).y;
 	    	}
 	        cent.x/=4.;
 	        cent.y/=4.;
@@ -88,9 +81,9 @@ public class Marker extends MatOfPoint2f implements Comparable<Marker>{
 	 */
 	public double perimeter(){
 		double sum=0;
-		for(int i=0;i<total();i++){
-			Point current = points.get(i);
-			Point next = points.get((i+1)%4);
+		for(int i=0;i<size();i++){
+			Point current = get(i);
+			Point next = get((i+1)%4);
 			sum+=Math.sqrt( (current.x-next.x)*(current.x-next.x) +
 					(current.y-next.y)*(current.y-next.y));
 		}
@@ -257,12 +250,10 @@ public class Marker extends MatOfPoint2f implements Comparable<Marker>{
 
 		MatOfPoint3f objPointsMat = new MatOfPoint3f();
 		objPointsMat.fromList(objPoints);
-		Calib3d.solvePnP(objPointsMat, this, camMatrix, distCoeffs, Rvec, Tvec);
+		MatOfPoint2f markerPointsMat = new MatOfPoint2f();
+		markerPointsMat.fromList(this);
+		Calib3d.solvePnP(objPointsMat, markerPointsMat, camMatrix, distCoeffs, Rvec, Tvec);
 //		Utils.rotateXAxis(Rvec);
-	}
-	
-	protected void setPoints(List<Point> p){
-		this.fromList(p);
 	}
 
 	private int hammDist(Code code){

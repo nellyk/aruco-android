@@ -1,38 +1,45 @@
 package es.ava.aruco;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Vector;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
-import org.opencv.utils.Converters;
 
+/**
+ * Class to detect markers. It will be done by a threshold technique and
+ * analysing the contours detected in the frame given looking for valid
+ * marker's code inside them.
+ * @author Rafael Ortega
+ *
+ */
 // TODO eliminate innecessary native calls, for example store the frame info 
 // such as type in member fields and call it only once
 public class MarkerDetector {
 	private enum thresSuppMethod {FIXED_THRES,ADPT_THRES,CANNY};
 	
-	// TODO are these really fields??
 	private double thresParam1, thresParam2;
 	private thresSuppMethod thresMethod;
 	private Mat grey, thres, thres2, hierarchy2;
-	private Vector<Mat> contours2;
+	private Vector<MatOfPoint> contours2;
 		
 	private final static double MIN_DISTANCE = 10;
 	
 	public MarkerDetector(){
 		thresParam1 = thresParam2 = 7;
 		thresMethod = thresSuppMethod.ADPT_THRES;
+		// TODO
 		grey = new Mat();
 		thres = new Mat();
 		thres2 = new Mat();
 		hierarchy2 = new Mat();
-		contours2 = new Vector<Mat>();
+		contours2 = new Vector<MatOfPoint>();
 	}
     
 	/**
@@ -44,7 +51,7 @@ public class MarkerDetector {
 	 * @param markerSizeMeters --
 	 * @param frameDebug used for debug issues, delete this
 	 */
-	public void detect(Mat in, Vector<Marker> detectedMarkers, Mat camMatrix, Mat distCoeff,
+	public void detect(Mat in, Vector<Marker> detectedMarkers, CameraParameters cp,//Mat camMatrix, Mat distCoeff,
 			float markerSizeMeters, Mat frameDebug){
 		Vector<Marker> candidateMarkers = new Vector<Marker>();
 		// the detection in the incoming frame will be done in a different vector
@@ -59,24 +66,29 @@ public class MarkerDetector {
 		// pass a copy because it modifies the src image
 		thres.copyTo(thres2);
 		Imgproc.findContours(thres2, contours2, hierarchy2, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_NONE);
+		
+		// uncomment the following line if you want the contours drawn
 //		Imgproc.drawContours(frameDebug, contours2, -1, new Scalar(255,0,0),2);
 		// to each contour analyze if it is a paralelepiped likely to be a marker
-		Mat approxCurve = new Mat();
-		List<Point> approxPoints = new ArrayList<Point>();
+		MatOfPoint2f approxCurve = new MatOfPoint2f();
+//		List<Point> approxPoints = new ArrayList<Point>();
 		for(int i=0;i<contours2.size();i++){
-			Mat contour = contours2.get(i);
+			MatOfPoint2f contour = new MatOfPoint2f();
+			contours2.get(i).convertTo(contour, CvType.CV_32FC2);
 			// first check if it has enough points
 			int contourSize = (int)contour.total();
 			if(contourSize > in.cols()/5){
 				Imgproc.approxPolyDP(contour, approxCurve, contourSize*0.05, true);
-				Converters.Mat_to_vector_Point(approxCurve, approxPoints);
+//				Converters.Mat_to_vector_Point(approxCurve, approxPoints);
 				// check the polygon has 4 points
 				if(approxCurve.total()== 4){
 					// and if it is convex
-					if(Imgproc.isContourConvex(approxPoints)){
+					MatOfPoint mat = new MatOfPoint();
+					approxCurve.convertTo(mat, CvType.CV_32SC2);
+					if(Imgproc.isContourConvex(mat)){
 						// ensure the distance between consecutive points is large enough
 						double minDistFound = Double.MAX_VALUE;
-						int[] points = new int[8];// [x1 y1 x2 y2 x3 y3 x4 y4]
+						float[] points = new float[8];// [x1 y1 x2 y2 x3 y3 x4 y4]
 						approxCurve.get(0,0,points);
 						// look for the min distance
 						for(int j=0;j<=4;j+=2){
@@ -87,11 +99,17 @@ public class MarkerDetector {
 						}
 						if(minDistFound > MIN_DISTANCE){
 							// create a candidate marker
-							candidateMarkers.add(new Marker(markerSizeMeters));
-							candidateMarkers.lastElement().add(new Point(points[0],points[1]));
-							candidateMarkers.lastElement().add(new Point(points[2],points[3]));
-							candidateMarkers.lastElement().add(new Point(points[4],points[5]));
-							candidateMarkers.lastElement().add(new Point(points[6],points[7]));
+							Vector<Point> p = new Vector<Point>();
+							p.add(new Point(points[0],points[1]));
+							p.add(new Point(points[2],points[3]));
+							p.add(new Point(points[4],points[5]));
+							p.add(new Point(points[6],points[7]));
+							candidateMarkers.add(new Marker(markerSizeMeters, p));
+//							candidateMarkers.add(new Marker(markerSizeMeters));
+//							candidateMarkers.lastElement().add(new Point(points[0],points[1]));
+//							candidateMarkers.lastElement().add(new Point(points[2],points[3]));
+//							candidateMarkers.lastElement().add(new Point(points[4],points[5]));
+//							candidateMarkers.lastElement().add(new Point(points[6],points[7]));
 						}
 					}
 				}
@@ -100,39 +118,47 @@ public class MarkerDetector {
 		int nCandidates = candidateMarkers.size();
 		// sort the points in anti-clockwise order
 		for(int i=0;i<nCandidates;i++){
+			Marker marker = candidateMarkers.get(i);
+			List<Point> p = new Vector<Point>();
+			p = marker.toList();
 	        // trace a line between the first and second point.
 	        // if the third point is at the right side, then the points are anti-clockwise
-			Marker marker = candidateMarkers.get(i);
-			double dx1 = marker.get(1).x - marker.get(0).x;
-			double dy1 = marker.get(1).y - marker.get(0).y;
-			double dx2 = marker.get(2).x - marker.get(0).x;
-			double dy2 = marker.get(2).y - marker.get(0).y;
+			double dx1 = p.get(1).x - p.get(0).x;
+			double dy1 = p.get(1).y - p.get(0).y;
+			double dx2 = p.get(2).x - p.get(0).x;
+			double dy2 = p.get(2).y - p.get(0).y;
 			double o = dx1*dy2 - dy1*dx2;
-			if(o < 0.0) // the third point is in the left side, we have to swap
-				Collections.swap(marker, 1, 3);
+			if(o < 0.0){ // the third point is in the left side, we have to swap
+				Collections.swap(p, 1, 3);
+				marker.setPoints(p);
+			}
 		}// points sorted in anti-clockwise order
 
-		// remove the elements whose corners are to close to each other // TODO test without this and see what happens
+		// remove the elements whose corners are to close to each other // TODO necessary?
 		Vector<Integer> tooNearCandidates = new Vector<Integer>(); // stores the indexes in the candidateMarkers
 										   // i.e [2,3,4,5] the marker 2 is too close to 3 and 4 to 5
 		for(int i=0;i<nCandidates;i++){
 			Marker toMarker = candidateMarkers.get(i);
+			List<Point> toPoints = new Vector<Point>();
+			toPoints = toMarker.toList();
 			// calculate the average distance of each corner to the nearest corner in the other marker
 			for(int j=i+1;j<nCandidates;j++){
 				float dist=0;
 				Marker fromMarker = candidateMarkers.get(j);
+				List<Point> fromPoints = new Vector<Point>();
+				fromPoints = fromMarker.toList();
 				// unrolling loop
-				dist+=Math.sqrt((fromMarker.get(0).x-toMarker.get(0).x)*(fromMarker.get(0).x-toMarker.get(0).x)+
-						(fromMarker.get(0).y-toMarker.get(0).y)*(fromMarker.get(0).y-toMarker.get(0).y));
+				dist+=Math.sqrt((fromPoints.get(0).x-toPoints.get(0).x)*(fromPoints.get(0).x-toPoints.get(0).x)+
+						(fromPoints.get(0).y-toPoints.get(0).y)*(fromPoints.get(0).y-toPoints.get(0).y));
 
-				dist+=Math.sqrt((fromMarker.get(1).x-toMarker.get(1).x)*(fromMarker.get(1).x-toMarker.get(1).x)+
-						(fromMarker.get(1).y-toMarker.get(1).y)*(fromMarker.get(1).y-toMarker.get(1).y));
+				dist+=Math.sqrt((fromPoints.get(1).x-toPoints.get(1).x)*(fromPoints.get(1).x-toPoints.get(1).x)+
+						(fromPoints.get(1).y-toPoints.get(1).y)*(fromPoints.get(1).y-toPoints.get(1).y));
 				
-				dist+=Math.sqrt((fromMarker.get(2).x-toMarker.get(2).x)*(fromMarker.get(2).x-toMarker.get(2).x)+
-						(fromMarker.get(2).y-toMarker.get(2).y)*(fromMarker.get(2).y-toMarker.get(2).y));
+				dist+=Math.sqrt((fromPoints.get(2).x-toPoints.get(2).x)*(fromPoints.get(2).x-toPoints.get(2).x)+
+						(fromPoints.get(2).y-toPoints.get(2).y)*(fromPoints.get(2).y-toPoints.get(2).y));
 				
-				dist+=Math.sqrt((fromMarker.get(3).x-toMarker.get(3).x)*(fromMarker.get(3).x-toMarker.get(3).x)+
-						(fromMarker.get(3).y-toMarker.get(3).y)*(fromMarker.get(3).y-toMarker.get(3).y));
+				dist+=Math.sqrt((fromPoints.get(3).x-toPoints.get(3).x)*(fromPoints.get(3).x-toPoints.get(3).x)+
+						(fromPoints.get(3).y-toPoints.get(3).y)*(fromPoints.get(3).y-toPoints.get(3).y));
 				dist = dist/4;
 				if(dist < MIN_DISTANCE){
 					tooNearCandidates.add(i);
@@ -158,7 +184,7 @@ public class MarkerDetector {
 			if(toRemove.get(i) == 0){
 				Marker marker = candidateMarkers.get(i);
 				Mat canonicalMarker = new Mat();
-				warp(in, canonicalMarker, new Size(50,50), marker);
+				warp(in, canonicalMarker, new Size(50,50), marker.toList());
 				marker.setMat(canonicalMarker);
 				marker.extractCode();
 				if(marker.checkBorder()){
@@ -166,7 +192,7 @@ public class MarkerDetector {
 					if(id != -1){
 						newMarkers.add(marker);
 						// rotate the points of the marker so they are always in the same order no matter the camera orientation
-						Collections.rotate(marker, 4-marker.getRotations());
+						Collections.rotate(marker.toList(), 4-marker.getRotations());
 					}
 				}
 			}
@@ -193,7 +219,8 @@ public class MarkerDetector {
 		
 		// detect the position of markers if desired
 		for(int i=0;i<newMarkers.size();i++){
-			newMarkers.get(i).calculateExtrinsics(camMatrix, distCoeff, markerSizeMeters);
+			if(cp.isValid())
+				newMarkers.get(i).calculateExtrinsics(cp.getCameraMatrix(), cp.getDistCoeff(), markerSizeMeters);
 		}
 		detectedMarkers.setSize(newMarkers.size());
 		Collections.copy(detectedMarkers, newMarkers);
@@ -235,7 +262,7 @@ public class MarkerDetector {
 		return thresMethod;
 	}
 	
-	// TODO revise this code
+	// TODO test different options
 	private void thresHold(thresSuppMethod method, Mat src, Mat dst){
 		switch(method){
 		case FIXED_THRES:
@@ -259,7 +286,7 @@ public class MarkerDetector {
 	 * @param size the size of the canonical mat we want to create
 	 * @param points the coordinates of the points in the "in" mat 
 	 */
-	private void warp(Mat in, Mat out, Size size, Vector<Point> points){
+	private void warp(Mat in, Mat out, Size size, List<Point> points){
 		Mat pointsIn = new Mat(4,1,CvType.CV_32FC2);
 		Mat pointsRes = new Mat(4,1,CvType.CV_32FC2);
 		pointsIn.put(0,0, points.get(0).x,points.get(0).y,

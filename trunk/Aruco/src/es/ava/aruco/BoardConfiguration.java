@@ -1,5 +1,11 @@
 package es.ava.aruco;
 
+/**
+ * Defines a board configuration by its width, height and the ids of the markers
+ * it contains. You can specify as well the distance between markers and their size.
+ * @author Rafael Ortega
+ *
+ */
 public class BoardConfiguration{
 	protected int width, height;
 	protected int[][] markersId;
