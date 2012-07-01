@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="es.ava.aruco.sample"
+    android:versionCode="1"
+    android:versionName="1.0" android:installLocation="preferExternal">
+
+    <uses-sdk android:minSdkVersion="8"
+        	  android:targetSdkVersion="8" />
+    
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
+    
+    <supports-screens android:resizeable="true"
+             android:smallScreens="true" 
+             android:normalScreens="true" 
+             android:largeScreens="true" 
+             android:anyDensity="true" />
+    <application
+        android:icon="@drawable/ic_launcher" android:label="@string/app_name" >
+        <activity
+            android:name=".MenuActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".BoardDetectActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation" >
+        </activity>
+        <activity
+            android:name=".Min3dTestActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation" >
+        </activity>
+        <activity
+            android:name=".MostSimpleActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation" >
+        </activity>
+        <activity
+            android:name=".SingleMarkerOBJActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation" >
+        </activity>
+        <activity
+            android:name=".ChooseModelActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="keyboardHidden|orientation" >
+        </activity>
+        <activity android:name=".NewMarkerActivity" android:label="@string/app_name"/>
+        
+        <activity android:name="es.ava.aruco.android.CameraCalibrationActivity" />
+    </application>
+
+</manifest>

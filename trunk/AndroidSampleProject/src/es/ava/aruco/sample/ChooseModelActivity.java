@@ -12,7 +12,6 @@ import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 
 import android.graphics.Bitmap;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import aruco.min3d.Shared;
@@ -65,6 +64,7 @@ public class ChooseModelActivity extends Aruco3dActivity {
 		b.recycle();
 				
 		earth = new Sphere(0.8f, 15, 10);
+		earth.initialScale(mMarkerSize);
 		earth.scale().x = earth.scale().y = earth.scale().z = mMarkerSize;
 		earth.textures().addById("earth");
 //		objModel.rotation().x = -90;
@@ -82,7 +82,7 @@ public class ChooseModelActivity extends Aruco3dActivity {
 			earth.rotation().z = mView.mAngleX();
 			earth.rotation().x = mView.mAngleY();
 			earth.scale().x=earth.scale().y=earth.scale().z = 
-				mView.mScale();
+				mView.mScale()*earth.initialScale();;
 		}
 	}
 
